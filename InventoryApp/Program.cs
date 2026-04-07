@@ -2,8 +2,7 @@
 {
     public static void Main(string[] args)
     {
-        FileRepository repository = new FileRepository();
-        InventoryService inventoryService = new InventoryService(repository);
+        InventoryService inventoryService = new InventoryService(new FileRepository());
 
         // Inventar se ulozi do ./bin/Debug/saves/
 
@@ -15,12 +14,9 @@
             Console.WriteLine(item.CreatedAt);
         }
 
-        Item test = new Item("Balicek", new Random().Next(), 5);
+        Item test = new Item($"Balicek_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}", new Random().Next(), 5);
+
         inventoryService.AddItem(test);
-
-        Console.Write("\nNastavuji cenu prvni polozky s nazvem balicek: ");
-        Console.WriteLine(inventoryService.GetByName("balicek")?.Price = 42);
-
-        repository.Save(inventoryService.GetAll());
+        inventoryService.Save();
     }
 }
