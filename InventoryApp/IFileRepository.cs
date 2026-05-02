@@ -1,3 +1,6 @@
+
+namespace InventoryApp;
+
 public interface IFileRepository
 {
 

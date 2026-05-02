@@ -1,6 +1,8 @@
 using System;
 using System.Text.Json.Serialization;
 
+namespace InventoryApp;
+
 public class Item
 {
     private string _name;
@@ -18,7 +20,7 @@ public class Item
         private set
         {
             if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("Item name cannot be empty.");
+                throw new ArgumentException("Název nesmí být prázdný.");
             _name = value;
             _updatedAt = DateTime.UtcNow;
         }
@@ -30,7 +32,7 @@ public class Item
         set
         {
             if (value < 0)
-                throw new ArgumentException("Item price cannot be negative.");
+                throw new ArgumentException("Cena nesmí být záporná.");
             _price = value;
             _updatedAt = DateTime.UtcNow;
         }
@@ -42,7 +44,7 @@ public class Item
         set
         {
             if (value < 0)
-                throw new ArgumentException("Item quantity cannot be negative.");
+                throw new ArgumentException("Množství nesmí být záporné.");
             _quantity = value;
             _updatedAt = DateTime.UtcNow;
         }
@@ -54,7 +56,7 @@ public class Item
         set
         {
             if (value < 0)
-                throw new ArgumentException("Item minimum stock cannot be negative.");
+                throw new ArgumentException("Minimum nesmí být záporné.");
             _minStock = value;
             _updatedAt = DateTime.UtcNow;
         }

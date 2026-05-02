@@ -1,4 +1,7 @@
 using System.Text.Json;
+using System.IO;
+
+namespace InventoryApp;
 
 public class FileRepository : IFileRepository
 {
