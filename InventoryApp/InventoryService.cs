@@ -17,8 +17,7 @@ public class InventoryService
 
     public void AddItem(Item item)
     {
-        if (item is null)
-            throw new ArgumentNullException(nameof(item));
+        ArgumentNullException.ThrowIfNull(item);
         if (_items.Any(i => i.Id == item.Id))
             throw new InvalidOperationException($"Zboží s ID {item.Id} již existuje.");
         if (_items.Any(i => i.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase)))
@@ -26,7 +25,7 @@ public class InventoryService
         _items.Add(item);
     }
 
-    public List<Item> GetAll()
+    public IReadOnlyList<Item> GetAll()
     {
         return _items;
     }
@@ -36,11 +35,16 @@ public class InventoryService
         return _items.FirstOrDefault(i => i.Id == id);
     }
 
-    public void UpdateItem(Guid id, decimal? price = null, int? quantity = null, int? minStock = null)
+    public void UpdateItem(Guid id, decimal? purchasePrice = null, decimal? sellingPrice = null,
+                           decimal? vat = null,
+                           int? quantity = null, int? soldCount = null, int? minStock = null)
     {
         Item item = GetById(id) ?? throw new KeyNotFoundException($"Zboží {id} nenalezeno.");
-        if (price.HasValue) item.Price = price.Value;
+        if (purchasePrice.HasValue) item.PurchasePrice = purchasePrice.Value;
+        if (sellingPrice.HasValue) item.SellingPrice = sellingPrice.Value;
+        if (vat.HasValue) item.Vat = vat.Value;
         if (quantity.HasValue) item.Quantity = quantity.Value;
+        if (soldCount.HasValue) item.SoldCount = soldCount.Value;
         if (minStock.HasValue) item.MinStock = minStock.Value;
     }
 
@@ -50,6 +54,17 @@ public class InventoryService
         if (item is null) return false;
         _items.Remove(item);
         return true;
+    }
+
+    public void SellItem(Guid id, int count)
+    {
+        Item item = GetById(id) ?? throw new KeyNotFoundException($"Zboží {id} nenalezeno.");
+        if (count <= 0)
+            throw new ArgumentException("Počet k prodeji musí být kladný.");
+        if (count > item.Quantity)
+            throw new InvalidOperationException($"Nedostatek na skladě (k dispozici: {item.Quantity}).");
+        item.Quantity -= count;
+        item.SoldCount += count;
     }
 
     public IEnumerable<Item> GetLowStock()
@@ -63,9 +78,19 @@ public class InventoryService
         return _items.Where(i => i.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
-    public decimal TotalInventoryValue()
+    public decimal TotalPurchaseValue()
     {
-        return _items.Sum(i => i.Price * i.Quantity);
+        return _items.Sum(i => i.PurchasePrice * (i.Quantity + i.SoldCount));
+    }
+
+    public decimal TotalRevenue()
+    {
+        return _items.Sum(i => i.SellingPrice * i.SoldCount);
+    }
+
+    public decimal TotalRevenueWithVat()
+    {
+        return _items.Sum(i => i.SellingPriceWithVat * i.SoldCount);
     }
 
     public int TotalItemCount()

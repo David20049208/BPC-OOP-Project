@@ -1,99 +1,238 @@
-﻿<Window x:Class="InventoryApp.MainWindow"
+<Window x:Class="InventoryApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="Správa skladu" Height="900" Width="1200">
+        Title="Správa skladu" Height="900" Width="1200"
+        MinHeight="500" MinWidth="1200"
+        Icon="resources/favicon.ico"
+        PreviewKeyDown="Window_KeyDown"
+        Background="{StaticResource Bg}"
+        TextElement.Foreground="{StaticResource TextColor}"
+        TextElement.FontSize="13"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto">
 
-	<Grid Margin="15">
+	<Grid Margin="20">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
 			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<Grid Grid.Row="0" Margin="0 0 0 0" VerticalAlignment="Top">
-			<Grid.ColumnDefinitions>	
-				<ColumnDefinition Width="Auto"/>
-				<ColumnDefinition Width="Auto"/>
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="Auto"/>
 			</Grid.ColumnDefinitions>
 
-			<StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Top">
-				<TextBox x:Name="NameTextBox" Width="180" Margin="0 0 8 0"
-                         Text="Název" Tag="Název" Foreground="Gray"
-                         GotFocus="Placeholder_GotFocus" LostFocus="Placeholder_LostFocus"/>
+			<StackPanel Grid.Column="0" VerticalAlignment="Center">
+				<TextBlock x:Name="SectionTitleTextBlock"
+				           Text="Přidat položku"
+				           FontSize="13"
+				           FontWeight="SemiBold"
+				           Foreground="{StaticResource Muted}"
+				           Margin="2 0 0 6"/>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+					</Grid.ColumnDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="Auto"/>
+					</Grid.RowDefinitions>
 
-				<TextBox x:Name="PriceTextBox" Width="100" Margin="0 0 8 0"
-                         Text="Cena" Tag="Cena" Foreground="Gray"
-                         GotFocus="Placeholder_GotFocus" LostFocus="Placeholder_LostFocus"/>
+					<TextBlock Grid.Row="0" Grid.Column="0" Text="Název"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 8 2"/>
+					<TextBlock Grid.Row="0" Grid.Column="1" Text="Cena nákupu (Kč)"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 8 2"/>
+					<TextBlock Grid.Row="0" Grid.Column="2" Text="Cena prodeje (Kč)"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 8 2"/>
+					<TextBlock Grid.Row="0" Grid.Column="3" Text="DPH (%)"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 8 2"/>
+					<TextBlock Grid.Row="0" Grid.Column="4" Text="Počet na skladě (ks)"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 8 2"/>
+					<TextBlock Grid.Row="0" Grid.Column="5" Text="Minimum (ks)"
+					           FontSize="11" Foreground="{StaticResource Muted}" Margin="2 0 12 2"/>
 
-				<TextBox x:Name="QuantityTextBox" Width="100" Margin="0 0 8 0"
-                         Text="Množství" Tag="Množství" Foreground="Gray"
-                         GotFocus="Placeholder_GotFocus" LostFocus="Placeholder_LostFocus"/>
-
-				<TextBox x:Name="MinStockTextBox" Width="100" Margin="0 0 8 0"
-                         Text="Minimum" Tag="Minimum" Foreground="Gray"
-                         GotFocus="Placeholder_GotFocus" LostFocus="Placeholder_LostFocus"/>
-
-				<Button Content="Přidat" Width="100" Click="AddButton_Click"/>
+					<TextBox Grid.Row="1" Grid.Column="0" x:Name="NameTextBox" Width="160" Margin="0 0 8 0"
+					         Style="{StaticResource HintTextBox}" Tag="Moje položka"/>
+					<TextBox Grid.Row="1" Grid.Column="1" x:Name="PurchasePriceTextBox" Width="100" Margin="0 0 8 0"
+					         Style="{StaticResource HintTextBox}" Tag="200"/>
+					<TextBox Grid.Row="1" Grid.Column="2" x:Name="SellingPriceTextBox" Width="100" Margin="0 0 8 0"
+					         Style="{StaticResource HintTextBox}" Tag="250"/>
+					<TextBox Grid.Row="1" Grid.Column="3" x:Name="VatTextBox" Width="80" Margin="0 0 8 0"
+					         Style="{StaticResource HintTextBox}" Tag="21"/>
+					<TextBox Grid.Row="1" Grid.Column="4" x:Name="QuantityTextBox" Width="150" Margin="0 0 8 0"
+					         Style="{StaticResource HintTextBox}" Tag="100"/>
+					<TextBox Grid.Row="1" Grid.Column="5" x:Name="MinStockTextBox" Width="95" Margin="0 0 12 0"
+					         Style="{StaticResource HintTextBox}" Tag="20"/>
+					<Button Grid.Row="1" Grid.Column="6" x:Name="AddButton" Content="Přidat" Width="100"
+					        Style="{StaticResource PrimaryButton}"
+					        Click="AddButton_Click"/>
+				</Grid>
 			</StackPanel>
 
-			<TextBlock x:Name="StatusTextBlock"
-                       Grid.Column="1"
-                       Margin="50 -35 0 0"
-                       VerticalAlignment="Center"
-                       FontWeight="Bold"/>
+			<Grid Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto"/>
+					<ColumnDefinition Width="Auto"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="Auto"/>
+				</Grid.RowDefinitions>
 
-			<StackPanel Grid.Column="3"
-                        HorizontalAlignment="Right"
-						VerticalAlignment="Top"
-						TextBlock.TextAlignment="Right">
+				<TextBlock Grid.Row="0" Grid.Column="0"
+				           Text="Nákup celkem:"
+				           FontWeight="Bold" FontSize="14"
+				           HorizontalAlignment="Right" Margin="0 0 8 0"/>
+				<TextBlock Grid.Row="0" Grid.Column="1" x:Name="TotalPurchaseValueTextBlock"
+				           FontWeight="Bold" FontSize="14"
+				           HorizontalAlignment="Right"
+				           Text="0 Kč"/>
 
-				<TextBlock x:Name="TotalValueTextBlock"
-                           FontWeight="Bold"
-                           Text="Celkem: 0 Kč"/>
+				<TextBlock Grid.Row="1" Grid.Column="0"
+				           Text="Tržba (bez DPH):"
+				           FontWeight="Bold" FontSize="14"
+				           Foreground="#16A34A"
+				           HorizontalAlignment="Right" Margin="0 2 8 0"/>
+				<TextBlock Grid.Row="1" Grid.Column="1" x:Name="TotalRevenueTextBlock"
+				           FontWeight="Bold" FontSize="14"
+				           Foreground="#16A34A"
+				           HorizontalAlignment="Right" Margin="0 2 0 0"
+				           Text="0 Kč"/>
 
-				<TextBlock x:Name="TotalItemCountTextBlock"
-                           Margin="0 4 0 0"
-                           Text="Kusů celkem: 0"/>
+				<TextBlock Grid.Row="2" Grid.Column="0"
+				           Text="Tržba (s DPH):"
+				           FontWeight="Bold" FontSize="14"
+				           Foreground="#16A34A"
+				           HorizontalAlignment="Right" Margin="0 2 8 0"/>
+				<TextBlock Grid.Row="2" Grid.Column="1" x:Name="TotalRevenueWithVatTextBlock"
+				           FontWeight="Bold" FontSize="14"
+				           Foreground="#16A34A"
+				           HorizontalAlignment="Right" Margin="0 2 0 0"
+				           Text="0 Kč"/>
 
-				<TextBlock x:Name="LowStockCountTextBlock"
-                           Margin="0 4 0 0"
-                           Text="Pod minimem: 0"/>
+				<TextBlock Grid.Row="3" Grid.Column="0"
+				           Text="Na skladě celkem:"
+				           Foreground="{StaticResource Muted}"
+				           HorizontalAlignment="Right" Margin="0 6 8 0"/>
+				<TextBlock Grid.Row="3" Grid.Column="1" x:Name="TotalItemCountTextBlock"
+				           Foreground="{StaticResource Muted}"
+				           HorizontalAlignment="Right" Margin="0 6 0 0"
+				           Text="0 ks"/>
+
+				<TextBlock Grid.Row="4" Grid.Column="0" x:Name="LowStockLabelTextBlock"
+				           Text="Pod minimem:"
+				           Foreground="{StaticResource Muted}"
+				           HorizontalAlignment="Right" Margin="0 4 8 0"/>
+				<TextBlock Grid.Row="4" Grid.Column="1" x:Name="LowStockCountTextBlock"
+				           Foreground="{StaticResource Muted}"
+				           HorizontalAlignment="Right" Margin="0 4 0 0"
+				           Text="0 položek"/>
+			</Grid>
+		</Grid>
+
+		<TextBlock x:Name="StatusTextBlock"
+		           Grid.Row="1"
+		           Margin="0 14 0 6"
+		           FontWeight="SemiBold"
+		           Foreground="{StaticResource Muted}"/>
+
+		<Grid Grid.Row="2" Margin="0 0 0 14">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto"/>
+			</Grid.ColumnDefinitions>
+
+			<StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+				<TextBox x:Name="SearchTextBox" Width="250" Margin="0 0 12 0"
+				         Style="{StaticResource HintTextBox}" Tag="Vyhledat podle názvu"
+				         TextChanged="SearchTextBox_TextChanged"/>
+
+				<Button x:Name="ShowAllButton" Content="Zobrazit vše" Width="110" Margin="0 0 8 0"
+				        Style="{StaticResource OutlinedButton}"
+				        Click="ShowAllButton_Click"/>
+				<Button x:Name="LowStockButton" Content="Pod minimem" Width="120"
+				        Style="{StaticResource OutlinedButton}"
+				        Click="LowStockButton_Click"/>
+			</StackPanel>
+
+			<StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+				<Button x:Name="UpdateButton" Content="Upravit vybranou" Width="150" Margin="0 0 8 0"
+				        Style="{StaticResource PrimaryButton}"
+				        Click="UpdateButton_Click"/>
+				<Button x:Name="CancelEditButton" Content="Zrušit" Width="90" Margin="0 0 8 0"
+				        Style="{StaticResource GhostButton}"
+				        Visibility="Collapsed"
+				        Click="CancelEditButton_Click"/>
+				<Button x:Name="SellButton" Content="Prodat" Width="100" Margin="0 0 8 0"
+				        Style="{StaticResource OutlinedButton}"
+				        Click="SellButton_Click"/>
+				<Button x:Name="DeleteButton" Content="Smazat vybranou" Width="140"
+				        Style="{StaticResource DangerButton}"
+				        Click="DeleteButton_Click"/>
 			</StackPanel>
 		</Grid>
 
-		<StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0 -20 0 10">
-			<TextBox x:Name="SearchTextBox" Width="250" Margin="0 0 8 0"
-                     Text="Vyhledat podle názvu" Tag="Vyhledat podle názvu"
-                     Foreground="Gray"
-                     GotFocus="Placeholder_GotFocus" LostFocus="Placeholder_LostFocus"/>
-
-			<Button Content="Vyhledat" Width="100" Margin="0 0 8 0" Click="SearchButton_Click"/>
-			<Button Content="Zobrazit vše" Width="100" Margin="0 0 8 0" Click="ShowAllButton_Click"/>
-			<Button Content="Pod minimem" Width="120" Margin="0 0 8 0" Click="LowStockButton_Click"/>
-			<Button Content="Upravit vybranou" Width="130" Margin="0 0 8 0" Click="UpdateButton_Click"/>
-			<Button Content="Smazat" Width="90" Click="DeleteButton_Click"/>
-		</StackPanel>
-
 		<DataGrid x:Name="ItemsDataGrid"
-                  Grid.Row="2"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single">
+		          Grid.Row="3"
+		          AutoGenerateColumns="False"
+		          IsReadOnly="True"
+		          CanUserDeleteRows="False"
+		          CanUserAddRows="False">
+			<DataGrid.RowStyle>
+				<Style TargetType="DataGridRow">
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding IsLowStock}" Value="True">
+							<Setter Property="Background" Value="#FEE2E2"/>
+						</DataTrigger>
+						<Trigger Property="IsSelected" Value="True">
+							<Setter Property="Background" Value="#BFDBFE"/>
+							<Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+			</DataGrid.RowStyle>
 			<DataGrid.Columns>
-				<DataGridTextColumn Header="Název" Binding="{Binding Name}" Width="*"/>
-				<DataGridTextColumn Header="Cena" Binding="{Binding Price}" Width="100"/>
-				<DataGridTextColumn Header="Množství" Binding="{Binding Quantity}" Width="100"/>
-				<DataGridTextColumn Header="Minimum" Binding="{Binding MinStock}" Width="100"/>
+				<DataGridTextColumn Header="Název položky" Binding="{Binding Name}" Width="*"/>
+				<DataGridTextColumn Header="Nákup" Binding="{Binding PurchasePrice, StringFormat={}{0:N2} Kč}" Width="105"/>
+				<DataGridTextColumn Header="Prodej" Binding="{Binding SellingPrice, StringFormat={}{0:N2} Kč}" Width="105"/>
+				<DataGridTextColumn Header="DPH" Binding="{Binding Vat, StringFormat={}{0:0.##} %}" Width="70"/>
+				<DataGridTextColumn Header="Prodej s DPH" Binding="{Binding SellingPriceWithVat, StringFormat={}{0:N2} Kč}" Width="120"/>
+				<DataGridTextColumn Header="Na skladě" Binding="{Binding Quantity, StringFormat={}{0} ks}" Width="90"/>
+				<DataGridTextColumn Header="Prodáno" Binding="{Binding SoldCount, StringFormat={}{0} ks}" Width="80"/>
+				<DataGridTextColumn Header="Minimum" Binding="{Binding MinStock, StringFormat={}{0} ks}" Width="85"/>
 				<DataGridTextColumn Header="Vytvořeno"
-                    Binding="{Binding CreatedAt, StringFormat={}{0:dd.MM.yyyy HH:mm}}"
-                    Width="160"/>
+				    Binding="{Binding CreatedAt, StringFormat={}{0:dd.MM.yy HH:mm}}"
+				    Width="100">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock">
+							<Setter Property="FontSize" Value="11"/>
+							<Setter Property="Foreground" Value="{StaticResource Muted}"/>
+						</Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
 				<DataGridTextColumn Header="Upraveno"
-                    Binding="{Binding UpdatedAt, StringFormat={}{0:dd.MM.yyyy HH:mm}}"
-                    Width="160"/>
+				    Binding="{Binding UpdatedAt, StringFormat={}{0:dd.MM.yy HH:mm}}"
+				    Width="100">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock">
+							<Setter Property="FontSize" Value="11"/>
+							<Setter Property="Foreground" Value="{StaticResource Muted}"/>
+						</Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
 			</DataGrid.Columns>
 		</DataGrid>
 

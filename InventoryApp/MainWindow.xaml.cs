@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,8 +15,8 @@ public partial class MainWindow : Window
     private Item? _itemBeingEdited;
     public MainWindow()
     {
-        InitializeComponent();
         _inventoryService = new InventoryService(new FileRepository());
+        InitializeComponent();
         ShowItems(_inventoryService.GetAll());
         UpdateStats();
     }
@@ -24,33 +25,15 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (NameTextBox.Foreground == Brushes.Gray || string.IsNullOrWhiteSpace(NameTextBox.Text))
+            if (!TryReadInputs(out string name,
+                               out decimal purchasePrice, out decimal sellingPrice,
+                               out decimal vat,
+                               out int quantity, out int minStock))
             {
-                SetStatus("Zadej název.");
                 return;
             }
 
-            string name = NameTextBox.Text;
-
-            if (!decimal.TryParse(PriceTextBox.Text, out decimal price))
-            {
-                SetStatus("Cena musí být číslo.");
-                return;
-            }
-
-            if (!int.TryParse(QuantityTextBox.Text, out int quantity))
-            {
-                SetStatus("Množství musí být celé číslo.");
-                return;
-            }
-
-            if (!int.TryParse(MinStockTextBox.Text, out int minStock))
-            {
-                SetStatus("Minimum musí být celé číslo.");
-                return;
-            }
-
-            Item item = new Item(name, price, minStock)
+            Item item = new(name, purchasePrice, sellingPrice, vat, minStock)
             {
                 Quantity = quantity
             };
@@ -69,41 +52,111 @@ public partial class MainWindow : Window
         }
     }
 
+    private bool TryReadInputs(out string name,
+                               out decimal purchasePrice, out decimal sellingPrice,
+                               out decimal vat,
+                               out int quantity, out int minStock)
+    {
+        name = NameTextBox.Text;
+        purchasePrice = 0m;
+        sellingPrice = 0m;
+        vat = 0m;
+        quantity = 0;
+        minStock = 0;
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            SetStatus("Zadej název.", warning: true);
+            return false;
+        }
+
+        if (!TryParseDecimal(PurchasePriceTextBox.Text, out purchasePrice))
+        {
+            SetStatus("Cena nákupu musí být číslo.", warning: true);
+            return false;
+        }
+
+        if (!TryParseDecimal(SellingPriceTextBox.Text, out sellingPrice))
+        {
+            SetStatus("Cena prodeje musí být číslo.", warning: true);
+            return false;
+        }
+
+        if (purchasePrice > sellingPrice)
+        {
+            SetStatus("Cena nákupu nemůže být vyšší než cena prodeje.", warning: true);
+            return false;
+        }
+
+        if (!TryParseDecimal(VatTextBox.Text, out vat))
+        {
+            SetStatus("DPH musí být číslo (např. 0 nebo 21).", warning: true);
+            return false;
+        }
+
+        if (!int.TryParse(QuantityTextBox.Text, NumberStyles.Integer, CultureInfo.CurrentCulture, out quantity))
+        {
+            SetStatus("Počet ks na skladě musí být celé číslo.", warning: true);
+            return false;
+        }
+
+        if (!int.TryParse(MinStockTextBox.Text, NumberStyles.Integer, CultureInfo.CurrentCulture, out minStock))
+        {
+            SetStatus("Minimum ks musí být celé číslo.", warning: true);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryParseDecimal(string text, out decimal value)
+    {
+        if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out value))
+            return true;
+        return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out value);
+    }
+
     private void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
         if (_itemBeingEdited == null)
         {
             if (ItemsDataGrid.SelectedItem is not Item selectedItem)
             {
-                SetStatus("Vyber položku k úpravě.");
+                SetStatus("Vyber položku k úpravě.", warning: true);
                 return;
             }
 
             _itemBeingEdited = selectedItem;
 
             NameTextBox.Text = selectedItem.Name;
-            PriceTextBox.Text = selectedItem.Price.ToString();
-            QuantityTextBox.Text = selectedItem.Quantity.ToString();
-            MinStockTextBox.Text = selectedItem.MinStock.ToString();
+            PurchasePriceTextBox.Text = selectedItem.PurchasePrice.ToString(CultureInfo.CurrentCulture);
+            SellingPriceTextBox.Text = selectedItem.SellingPrice.ToString(CultureInfo.CurrentCulture);
+            VatTextBox.Text = selectedItem.Vat.ToString(CultureInfo.CurrentCulture);
+            QuantityTextBox.Text = selectedItem.Quantity.ToString(CultureInfo.CurrentCulture);
+            MinStockTextBox.Text = selectedItem.MinStock.ToString(CultureInfo.CurrentCulture);
 
-            NameTextBox.IsEnabled = false;
+            SetEditMode(true);
 
-            NameTextBox.Foreground = Brushes.Black;
-            PriceTextBox.Foreground = Brushes.Black;
-            QuantityTextBox.Foreground = Brushes.Black;
-            MinStockTextBox.Foreground = Brushes.Black;
-
-            SetStatus("Uprav hodnoty a znovu klikni na Upravit vybranou.");
+            SetStatus("Uprav hodnoty a znovu klikni na Potvrdit úpravu.");
             return;
         }
 
         try
         {
-            decimal price = decimal.Parse(PriceTextBox.Text);
-            int quantity = int.Parse(QuantityTextBox.Text);
-            int minStock = int.Parse(MinStockTextBox.Text);
+            if (!TryReadInputs(out _,
+                               out decimal purchasePrice, out decimal sellingPrice,
+                               out decimal vat,
+                               out int quantity, out int minStock))
+            {
+                return;
+            }
 
-            _inventoryService.UpdateItem(_itemBeingEdited.Id, price, quantity, minStock);
+            _inventoryService.UpdateItem(_itemBeingEdited.Id,
+                                         purchasePrice: purchasePrice,
+                                         sellingPrice: sellingPrice,
+                                         vat: vat,
+                                         quantity: quantity,
+                                         minStock: minStock);
             _inventoryService.Save();
 
             ShowItems(_inventoryService.GetAll());
@@ -113,7 +166,7 @@ public partial class MainWindow : Window
             ItemsDataGrid.SelectedItem = null;
 
             ResetInputs();
-            NameTextBox.IsEnabled = true; 
+            SetEditMode(false);
 
             SetStatus("Položka byla upravena.");
         }
@@ -123,27 +176,159 @@ public partial class MainWindow : Window
         }
     }
 
+    private void SetEditMode(bool editing)
+    {
+        AddButton.IsEnabled = !editing;
+        ShowAllButton.IsEnabled = !editing;
+        LowStockButton.IsEnabled = !editing;
+        DeleteButton.IsEnabled = !editing;
+        SellButton.IsEnabled = !editing;
+
+        NameTextBox.IsEnabled = !editing;
+        SearchTextBox.IsEnabled = !editing;
+        ItemsDataGrid.IsEnabled = !editing;
+
+        UpdateButton.Content = editing ? "Potvrdit úpravu" : "Upravit vybranou";
+        CancelEditButton.Visibility = editing ? Visibility.Visible : Visibility.Collapsed;
+
+        if (editing && _itemBeingEdited != null)
+        {
+            SectionTitleTextBlock.Text = $"Upravit položku: {_itemBeingEdited.Name}";
+            SectionTitleTextBlock.Foreground = (Brush)FindResource("Primary");
+        }
+        else
+        {
+            SectionTitleTextBlock.Text = "Přidat položku";
+            SectionTitleTextBlock.Foreground = (Brush)FindResource("Muted");
+        }
+    }
+
+    private void CancelEditButton_Click(object sender, RoutedEventArgs e)
+    {
+        _itemBeingEdited = null;
+        ItemsDataGrid.SelectedItem = null;
+
+        ResetInputs();
+        SetEditMode(false);
+
+        SetStatus("Editace zrušena.");
+    }
+
+    private void Window_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (_itemBeingEdited != null)
+            {
+                UpdateButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (Keyboard.FocusedElement is TextBox box
+                     && (box == NameTextBox || box == PurchasePriceTextBox
+                         || box == SellingPriceTextBox || box == VatTextBox
+                         || box == QuantityTextBox || box == MinStockTextBox))
+            {
+                AddButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == Key.Escape && _itemBeingEdited != null)
+        {
+            CancelEditButton_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Delete
+                 && _itemBeingEdited == null
+                 && Keyboard.FocusedElement is not TextBox)
+        {
+            DeleteButton_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
+    }
+
+    private void SellButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ItemsDataGrid.SelectedItem is not Item selectedItem)
+        {
+            SetStatus("Vyber položku k prodeji.", warning: true);
+            return;
+        }
+
+        if (selectedItem.Quantity <= 0)
+        {
+            SetStatus($"Položka \"{selectedItem.Name}\" nemá žádný kus na skladě.", warning: true);
+            return;
+        }
+
+        SellDialog dialog = new(selectedItem.Name, selectedItem.Quantity)
+        {
+            Owner = this
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            SetStatus("Prodej zrušen.");
+            return;
+        }
+
+        try
+        {
+            _inventoryService.SellItem(selectedItem.Id, dialog.Count);
+            _inventoryService.Save();
+
+            ShowItems(_inventoryService.GetAll());
+            UpdateStats();
+            SetStatus($"Prodáno {dialog.Count} ks položky \"{selectedItem.Name}\".");
+        }
+        catch (Exception ex)
+        {
+            SetStatus(ex.Message, warning: true);
+        }
+    }
+
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
         if (ItemsDataGrid.SelectedItem is not Item selectedItem)
         {
-            SetStatus("Vyber položku ke smazání.");
+            SetStatus("Vyber položku ke smazání.", warning: true);
+            return;
+        }
+
+        MessageBoxResult result = MessageBox.Show(
+            $"Opravdu chceš smazat položku \"{selectedItem.Name}\"?",
+            "Potvrzení smazání",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            SetStatus("Smazání zrušeno.");
             return;
         }
 
         _inventoryService.RemoveItem(selectedItem.Id);
         _inventoryService.Save();
 
+        ItemsDataGrid.SelectedItem = null;
         ShowItems(_inventoryService.GetAll());
         UpdateStats();
         SetStatus("Položka byla smazána.");
     }
 
-    private void SearchButton_Click(object sender, RoutedEventArgs e)
+    private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        ShowItems(_inventoryService.Search(SearchTextBox.Text));
+        if (ItemsDataGrid == null) return;
+
+        if (string.IsNullOrWhiteSpace(SearchTextBox.Text))
+        {
+            ShowItems(_inventoryService.GetAll());
+        }
+        else
+        {
+            ShowItems(_inventoryService.Search(SearchTextBox.Text));
+        }
         UpdateStats();
-        SetStatus("Výsledky vyhledávání.");
     }
 
     private void ShowAllButton_Click(object sender, RoutedEventArgs e)
@@ -168,53 +353,50 @@ public partial class MainWindow : Window
     private void ResetInputs()
     {
         NameTextBox.Text = "";
-        PriceTextBox.Text = "";
+        PurchasePriceTextBox.Text = "";
+        SellingPriceTextBox.Text = "";
+        VatTextBox.Text = "";
         QuantityTextBox.Text = "";
         MinStockTextBox.Text = "";
-
-        Placeholder_LostFocus(NameTextBox, new RoutedEventArgs());
-        Placeholder_LostFocus(PriceTextBox, new RoutedEventArgs());
-        Placeholder_LostFocus(QuantityTextBox, new RoutedEventArgs());
-        Placeholder_LostFocus(MinStockTextBox, new RoutedEventArgs());
 
         Keyboard.ClearFocus();
     }
 
-    private void SetStatus(string message)
+    private void SetStatus(string message, bool warning = false)
     {
         StatusTextBlock.Text = message;
+        StatusTextBlock.Foreground = (Brush)FindResource(warning ? "Danger" : "Muted");
     }
 
-    private void Placeholder_GotFocus(object sender, RoutedEventArgs e)
+    private static string CzechItemPlural(int count)
     {
-        TextBox box = (TextBox)sender;
-
-        if (box.Foreground == Brushes.Gray)
-        {
-            box.Text = "";
-            box.Foreground = Brushes.Black;
-        }
+        if (count == 1) return "položka";
+        if (count >= 2 && count <= 4) return "položky";
+        return "položek";
     }
 
-    private void Placeholder_LostFocus(object sender, RoutedEventArgs e)
-    {
-        TextBox box = (TextBox)sender;
-
-        if (string.IsNullOrWhiteSpace(box.Text))
-        {
-            box.Text = box.Tag?.ToString();
-            box.Foreground = Brushes.Gray;
-        }
-    }
     private void UpdateStats()
     {
-        TotalValueTextBlock.Text =
-            $"Celkem: {_inventoryService.TotalInventoryValue():N2} Kč";
+        TotalPurchaseValueTextBlock.Text =
+            $"{_inventoryService.TotalPurchaseValue():N2} Kč";
+
+        TotalRevenueTextBlock.Text =
+            $"{_inventoryService.TotalRevenue():N2} Kč";
+
+        TotalRevenueWithVatTextBlock.Text =
+            $"{_inventoryService.TotalRevenueWithVat():N2} Kč";
 
         TotalItemCountTextBlock.Text =
-            $"Kusů celkem: {_inventoryService.TotalItemCount()}";
+            $"{_inventoryService.TotalItemCount()} ks";
 
-        LowStockCountTextBlock.Text =
-            $"Pod minimem: {_inventoryService.LowStockCount()}";
+        int lowStockCount = _inventoryService.LowStockCount();
+        LowStockCountTextBlock.Text = $"{lowStockCount} {CzechItemPlural(lowStockCount)}";
+
+        Brush lowStockBrush = (Brush)FindResource(lowStockCount > 0 ? "Danger" : "Muted");
+        FontWeight lowStockWeight = lowStockCount > 0 ? FontWeights.Bold : FontWeights.Normal;
+        LowStockLabelTextBlock.Foreground = lowStockBrush;
+        LowStockCountTextBlock.Foreground = lowStockBrush;
+        LowStockLabelTextBlock.FontWeight = lowStockWeight;
+        LowStockCountTextBlock.FontWeight = lowStockWeight;
     }
 }
